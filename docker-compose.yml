@@ -1,0 +1,34 @@
+version: "3.9"
+
+services:
+  golang:
+    container_name: "app"
+    build:
+      context: .
+      dockerfile: Dockerfile
+
+  filebeat:
+    image: "docker.elastic.co/beats/filebeat:7.17.0"
+    container_name: "filebeat"
+    user: root
+    volumes:
+      - ./config/filebeat.yml:/usr/share/filebeat/filebeat.yml:ro
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      - /var/lib/docker/containers:/var/lib/docker/containers:ro
+    environment:
+      APP_CONTAINER_NAME: "app"
+
+  elasticsearch:
+    image: "docker.elastic.co/elasticsearch/elasticsearch:7.17.0"
+    container_name: "elasticsearch"
+    environment:
+      - "ES_JAVA_OPTS=-Xms1g -Xmx1g"
+      - "discovery.type=single-node"
+    ports:
+      - "9200:9200"
+
+  kibana:
+    image: "docker.elastic.co/kibana/kibana:7.17.0"
+    container_name: "kibana"
+    ports:
+      - "5601:5601"

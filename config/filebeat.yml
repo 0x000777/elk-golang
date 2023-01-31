@@ -1,0 +1,25 @@
+filebeat.autodiscover:
+  providers:
+    - type: docker
+      templates:
+        - condition:
+            contains:
+              docker.container.name: "${APP_CONTAINER_NAME}"
+          config:
+            - type: container
+              paths:
+                - /var/lib/docker/containers/${data.docker.container.id}/*.log
+
+processors:
+  - drop_fields:
+      fields: ["agent", "container", "ecs", "log", "input", "docker", "host"]
+      ignore_missing: true
+  - decode_json_fields:
+      fields: ["message"]
+      target: "log"
+      overwrite_keys: true
+
+output.elasticsearch:
+  hosts: ["elasticsearch"]
+  indices:
+    - index: "${APP_CONTAINER_NAME}"
